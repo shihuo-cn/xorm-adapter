@@ -270,6 +270,9 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 	lines := make([]*CasbinRule, 0, 64)
 
 	conn := a.engine.Context(tracingCtx).Table(&CasbinRule{tableName: a.tableName})
+	defer func() {
+		_ = conn.Close()
+	}()
 	if err := conn.Find(&lines); err != nil {
 		return err
 	}
@@ -425,6 +428,9 @@ func (a *Adapter) LoadFilteredPolicy(model model.Model, filter interface{}) erro
 
 	lines := make([]*CasbinRule, 0, 64)
 	conn := a.engine.NewSession().Context(tracingCtx)
+	defer func() {
+		_ = conn.Close()
+	}()
 	if err := a.filterQuery(conn, filterValue).Table(&CasbinRule{tableName: a.tableName}).Find(&lines); err != nil {
 		return err
 	}
