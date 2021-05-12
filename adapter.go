@@ -21,6 +21,7 @@ import (
 	"runtime"
 	"strings"
 
+	"code.shihuo.cn/go/hms-components/xlog"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
 	"github.com/lib/pq"
@@ -423,9 +424,10 @@ func (a *Adapter) LoadFilteredPolicy(model model.Model, filter interface{}) erro
 	}
 	a.isFiltered = true
 	sql, args := conn.LastSQL()
-	
+
 	log.Printf(`Sql[%v] args[%v]\n`, sql, args)
 	fmt.Printf(`Sql[%v] args[%v]\n`, sql, args)
+	xlog.WithEvent("LoadFilteredPolicy").WithField("param", sql).WithField("param1", args).Info()
 	return nil
 }
 
