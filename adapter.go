@@ -16,6 +16,7 @@ package xormadapter
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"runtime"
 	"strings"
@@ -412,7 +413,8 @@ func (a *Adapter) LoadFilteredPolicy(model model.Model, filter interface{}) erro
 	}
 
 	lines := make([]*CasbinRule, 0, 64)
-	if err := a.filterQuery(a.engine.NewSession(), filterValue).Table(&CasbinRule{tableName: a.tableName}).Find(&lines); err != nil {
+	conn := a.engine.NewSession()
+	if err := a.filterQuery(conn, filterValue).Table(&CasbinRule{tableName: a.tableName}).Find(&lines); err != nil {
 		return err
 	}
 
@@ -420,6 +422,10 @@ func (a *Adapter) LoadFilteredPolicy(model model.Model, filter interface{}) erro
 		loadPolicyLine(line, model)
 	}
 	a.isFiltered = true
+	sql, args := conn.LastSQL()
+	
+	log.Printf(`Sql[%v] args[%v]\n`, sql, args)
+	fmt.Printf(`Sql[%v] args[%v]\n`, sql, args)
 	return nil
 }
 
