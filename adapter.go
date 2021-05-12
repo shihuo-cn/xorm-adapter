@@ -15,8 +15,9 @@
 package xormadapter
 
 import (
+	"context"
 	"errors"
-	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"log"
 	"runtime"
 	"strings"
@@ -263,9 +264,12 @@ func loadPolicyLine(line *CasbinRule, model model.Model) {
 
 // LoadPolicy loads policy from database.
 func (a *Adapter) LoadPolicy(model model.Model) error {
+	span, tracingCtx := opentracing.StartSpanFromContext(context.Background(), "rbac_mysql")
+	defer span.Finish()
+
 	lines := make([]*CasbinRule, 0, 64)
 
-	conn := a.engine.Table(&CasbinRule{tableName: a.tableName})
+	conn := a.engine.Context(tracingCtx).Table(&CasbinRule{tableName: a.tableName})
 	if err := conn.Find(&lines); err != nil {
 		return err
 	}
@@ -275,8 +279,6 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 	}
 
 	sql, args := conn.LastSQL()
-	log.Printf(`Sql[%v] args[%v]\n`, sql, args)
-	fmt.Printf(`Sql[%v] args[%v]\n`, sql, args)
 	xlog.WithEvent("LoadFilteredPolicy").WithField("param", sql).WithField("param1", args).Info()
 
 	return nil
@@ -414,13 +416,15 @@ func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int,
 
 // LoadFilteredPolicy loads only policy rules that match the filter.
 func (a *Adapter) LoadFilteredPolicy(model model.Model, filter interface{}) error {
+	span, tracingCtx := opentracing.StartSpanFromContext(context.Background(), "rbac_mysql")
+	defer span.Finish()
 	filterValue, ok := filter.(Filter)
 	if !ok {
 		return errors.New("invalid filter type")
 	}
 
 	lines := make([]*CasbinRule, 0, 64)
-	conn := a.engine.NewSession()
+	conn := a.engine.NewSession().Context(tracingCtx)
 	if err := a.filterQuery(conn, filterValue).Table(&CasbinRule{tableName: a.tableName}).Find(&lines); err != nil {
 		return err
 	}
@@ -430,9 +434,6 @@ func (a *Adapter) LoadFilteredPolicy(model model.Model, filter interface{}) erro
 	}
 	a.isFiltered = true
 	sql, args := conn.LastSQL()
-
-	log.Printf(`Sql[%v] args[%v]\n`, sql, args)
-	fmt.Printf(`Sql[%v] args[%v]\n`, sql, args)
 	xlog.WithEvent("LoadFilteredPolicy").WithField("param", sql).WithField("param1", args).Info()
 	return nil
 }
