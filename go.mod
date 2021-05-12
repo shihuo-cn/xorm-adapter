@@ -1,4 +1,4 @@
-module github.com/casbin/xorm-adapter/v2
+module github.com/shihuo-cn/xorm-adapter/v2
 
 go 1.12
 
