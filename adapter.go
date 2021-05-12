@@ -265,13 +265,19 @@ func loadPolicyLine(line *CasbinRule, model model.Model) {
 func (a *Adapter) LoadPolicy(model model.Model) error {
 	lines := make([]*CasbinRule, 0, 64)
 
-	if err := a.engine.Table(&CasbinRule{tableName: a.tableName}).Find(&lines); err != nil {
+	conn := a.engine.Table(&CasbinRule{tableName: a.tableName})
+	if err := conn.Find(&lines); err != nil {
 		return err
 	}
 
 	for _, line := range lines {
 		loadPolicyLine(line, model)
 	}
+
+	sql, args := conn.LastSQL()
+	log.Printf(`Sql[%v] args[%v]\n`, sql, args)
+	fmt.Printf(`Sql[%v] args[%v]\n`, sql, args)
+	xlog.WithEvent("LoadFilteredPolicy").WithField("param", sql).WithField("param1", args).Info()
 
 	return nil
 }
