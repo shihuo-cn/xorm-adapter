@@ -234,10 +234,14 @@ func (a *Adapter) open() error {
 }
 
 func (a *Adapter) createTable() error {
+	xlog.WithEvent("createTable").Info()
+
 	return a.engine.Sync2(&CasbinRule{tableName: a.tableName})
 }
 
 func (a *Adapter) dropTable() error {
+	xlog.WithEvent("dropTable").Info()
+
 	return a.engine.DropTables(&CasbinRule{tableName: a.tableName})
 }
 
@@ -282,7 +286,7 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 	}
 
 	sql, args := conn.LastSQL()
-	xlog.WithEvent("LoadFilteredPolicy").WithField("param", sql).WithField("param1", args).Info()
+	xlog.WithEvent("LoadPolicy").WithField("param", sql).WithField("param1", args).Info()
 
 	return nil
 }
